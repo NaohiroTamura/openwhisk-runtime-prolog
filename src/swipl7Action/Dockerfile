@@ -14,14 +14,16 @@
 #
 
 FROM swipl:7.5.15
+#FROM swipl:7.6.3
 
 RUN apt-get update -y && \ 
-    apt-get install -y procps curl iputils-ping iproute2 traceroute dnsutils \
+    apt-get install -y zip unzip \
+                       procps curl iputils-ping iproute2 traceroute dnsutils \
                        less vim-tiny
 
 EXPOSE 8080
 
-RUN mkdir -p /prologAction
-ADD prologrunner.py /prologAction/
+RUN mkdir /prologAction
+ADD swipl_runner.pl /prologAction/
 
 CMD ["/bin/bash", "-c", "cd prologAction && swipl -q -l swipl_runner.pl -g main -t halt"]

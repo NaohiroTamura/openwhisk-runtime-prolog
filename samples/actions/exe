@@ -1,0 +1,16 @@
+#!/usr/bin/env swipl
+
+:- initialization(main, main).
+
+:- use_module(library(http/json)).
+
+%% $ ./exe '{"name":"script"}'
+%% {"payload":"Hello, script!"}
+main([Json |_Argv]) :-
+    open_string(Json, S),
+    json_read_dict(S, Dict),
+    ( _{name: Name} :< Dict; Name = 'World' ),
+    atomics_to_string(['Hello, ', Name, '!'], Greetings),
+    json_write_dict(user_output, _{payload: Greetings}).
+
+

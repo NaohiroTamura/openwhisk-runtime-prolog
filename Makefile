@@ -13,6 +13,8 @@
 # under the License.
 #
 
+SHELL = /bin/bash
+
 docker_image_prefix =
 docker_image_tag = :latest
 
@@ -33,14 +35,16 @@ unit_test:
 # make -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1 build
 build:
 	@echo "create runtime image"
-	docker build -t $(docker_image_prefix)swipl7Action$(docker_image_tag)
+	@pushd src/swipl7Action && \
+	docker build -t $(docker_image_prefix)swipl7action$(docker_image_tag) . &&\
+	popd
 
 # make -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1 run
 run:
 	@echo "run prolog action runner in docker"
 	docker run -d \
-	           -p 8080:8080 -v /tmp:/logs \
-	           $(docker_image_prefix)swipl7Action$(docker_image_tag)
+	           -p 8080:8080 -v /tmp:/logs -v /tmp:/action \
+	           $(docker_image_prefix)swipl7action$(docker_image_tag)
 
 debug:
 	@echo "run prolog action runner in local for debugging"

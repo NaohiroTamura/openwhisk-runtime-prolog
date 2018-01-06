@@ -1,4 +1,3 @@
-%% #!/usr/bin/swipl -q
 %% -*- mode: prolog; coding: utf-8; -*-
 %%
 %% Copyright 2017 FUJITSU LIMITED
@@ -20,24 +19,17 @@
 %%  
 %%
 
-%%:- module(swlpl_runner).
+:- module(swlpl_runner, [main/0]).
 
 %% http server
 :- use_module(library(http/thread_httpd)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/json)).
-:- use_module(library(http/json_convert)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_log)).
 :- use_module(library(http/http_client)).
-:- use_module(library(http/html_write)).
-:- use_module(library(http/http_authenticate)).
-:- use_module(library(http/http_header)).
 :- use_module(library(http/http_error)). % should be removed in puroduction
-
-%% start
-%% :- initialization(main).
 
 %%
 %% main
@@ -63,9 +55,9 @@ hup(_Signal) :-
     thread_send_message(main, stop),
     halt(0).
 
-%%
+%% Only one job is to be sent to the ContainerProxy at one time.
 :- dynamic
-       cached_code/4.
+       cached_job/4.
 
 %% init action
 :- http_handler('/init', init, [methods([post])]).
@@ -77,10 +69,23 @@ init(Request) :-
 
     ( is_dict(Dict),
       _{value: _{name: Name, binary: Binary, main: Main, code: Code}} :< Dict
-      -> term_string(Term, Code),
-         save_term(Name, Code, File),
-         Output = _{file: File},
-         assertz(cached_code(Name, Binary, Main, Code)),
+      -> ( Binary = "true"
+           -> base64(PlainCode, Code),
+              open('/action/exe.zip', write, S1, [type(binary)]),
+              call_cleanup(
+                      write(S1, PlainCode),
+                      close(S1)),
+              open(pipe('cd /action; unzip -o exe.zip'), read, S2),
+              call_cleanup(
+                      read_string(S2, _N, Unzip),
+                      close(S2)),
+              format(user_output, 'Unzip: ~w', [Unzip])
+           ;  term_string(_Term, Code), %% make sure Code has no syntax error
+              save_term(Name, Code, File),
+              format(user_output, 'Saved: ~w', [File])
+         ),
+         assertz(cached_job(Name, Binary, Main, Code)),
+         Output = "OK",
          Status = 200
       ;  Output = _{error: 'illegal parameter'},
          Status = 404
@@ -101,15 +106,34 @@ run(Request) :-
         deadline: Deadline,
         api_key: API_KEY,
         value: Value,
-        namespace:Namespace} :< Dict
-      -> split_string(ActionName, "/", "", ["", NS, Name]),
-         load_term(Name, File),
-         cached_code(Name, Binary, Main, Code),
-         retract(cached_code(Name, Binary, Main, Code)),
-         atom_string(Func, Main),
-         Q =.. [Func, Value, Output],
-         Q,
-         Status = 200
+        namespace: Namespace} :< Dict
+      -> ( split_string(ActionName, "/", "", ["", NS, Name]),
+           format(user_output, 'Namespace: ~p, Name: ~p, ~p~n',
+                  [NS, Name, params(ActivationID, ActionName, Deadline,
+                                    API_KEY, Value, Namespace)]),
+           cached_job(Name, Binary, Main, Code),
+           (  Binary = "true"
+              -> http_log('Binary: ~p~n', [job(Name, Binary, Main, Code)]),
+                 atom_json_dict(Arg, Value, []),
+                 format(string(Command), "cd /action; ./exe '~w'", [Arg]),
+                 format(user_output, 'Command: ~w~n', [Command]),
+                 open(pipe(Command), read, S2),
+                 call_cleanup(
+                         read_string(S2, _N, Json),
+                         close(S2)),
+                 atom_json_dict(Json, Output, []),
+                 format(user_output, 'Result: ~p, ~p~n', [Json, Output]),
+                 Status = 200
+              ;  http_log('Text  : ~p~n', [job(Name, Binary, Main, Code)]),
+                 load_term(Name, File),
+                 atom_string(Func, Main),
+                 Q =.. [Func, Value, Output],
+                 format(user_output, 'File: ~w, Function: ~w~n', [File, Q]),
+                 Q,
+                 Status = 200
+           ),
+           retract(cached_job(Name, Binary, Main, Code))
+         )
       ;  Output = _{error: 'illegal parameter'},
          Status = 404
     ),
@@ -124,13 +148,12 @@ term_json_dict(Term, Dict) :-
 
 %%
 save_term(Name, Term, File) :-
-    string_concat("/logs/", Name, File),
+    string_concat("/action/", Name, File),
     open(File, write, S),
     call_cleanup(
             write_term(S, Term, []),
-            %%format(S, '~p.~n', [Term]),
             close(S)).
 
 load_term(Name, File) :-
-    string_concat("/logs/", Name, File),
+    string_concat("/action/", Name, File),
     load_files(File).
