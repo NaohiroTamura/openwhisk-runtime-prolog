@@ -44,7 +44,7 @@ main :-
     set_setting(http:logfile,'/logs/httpd.log'), % docker volume /tmp
     getenv('SVC_PORT', Port) -> server(Port); server(8080).
 
-%% The number of workers has to be one so that /run cannot overtake /init.
+%% single threaded server
 server(Port) :-
     http_server(http_dispatch, [port(Port), workers(1)]),
     thread_get_message(stop).
@@ -56,11 +56,14 @@ hup(_Signal) :-
     thread_send_message(main, stop),
     halt(0).
 
-%% Only one job is to be sent to the ContainerProxy at one time.
+%% cache should not be removed because Invoker calls /run more than once
+%% after calling /init.
 :- dynamic
        cached_job/4.
 
+%%
 %% init action
+%%
 :- http_handler('/init', init, [methods([post])]).
 
 init(Request) :-
@@ -68,25 +71,9 @@ init(Request) :-
     http_read_json_dict(Request, Dict, []),
     http_log('~p~n', [params(Dict)]),
 
-    ( is_dict(Dict),
-      _{value: _{name: Name, binary: Binary, main: Main, code: Code}} :< Dict
-      -> ( ( Binary = "true"; Binary = true)
-           -> base64(PlainCode, Code),
-              open('/action/exec.zip', write, S1, [type(binary)]),
-              call_cleanup(
-                      write(S1, PlainCode),
-                      close(S1)),
-              open(pipe('cd /action; unzip -o exec.zip'), read, S2),
-              call_cleanup(
-                      read_string(S2, _N, Unzip),
-                      close(S2)),
-              http_log('Unzip: ~w', [Unzip])
-           ;  term_string(_Term, Code), %% make sure Code has no syntax error
-              save_term(Name, Code, File),
-              http_log('Saved: ~w', [File])
-         ),
-         atom_string(BinaryAtom, Binary),
-         assertz(cached_job(Name, BinaryAtom, Main, Code)),
+    ( check_init_param(Dict, Name, Binary, Main, Code)
+      -> save_action(Name, Binary, Main, Code),
+         assertz(cached_job(Name, Binary, Main, Code)),
          Output = "OK",
          Status = 200
       ;  Output = _{error: 'illegal parameter'},
@@ -94,7 +81,34 @@ init(Request) :-
     ),
     reply_json_dict(Output, [status(Status)]).
 
+%%
+check_init_param(Dict, Name, Binary, Main, Code) :-
+    is_dict(Dict),
+    _{value: _{name: Name, binary: BinaryStr, main: Main, code: Code}} :< Dict,
+    atom_string(Binary, BinaryStr).
+
+%% Binary Mode
+save_action(_Name, true, _Main, Code) :-
+    base64(PlainCode, Code),
+    open('/action/exec.zip', write, S1, [type(binary)]),
+    call_cleanup(
+            write(S1, PlainCode),
+            close(S1)),
+    open(pipe('cd /action; unzip -o exec.zip'), read, S2),
+    call_cleanup(
+            read_string(S2, _N, Unzip),
+            close(S2)),
+    http_log('Unzip: ~w', [Unzip]).
+
+%% Text Mode
+save_action(Name, false, _Main, Code) :-
+    term_string(_Term, Code), %% make sure Code has no syntax error
+    save_term(Name, Code, File),
+    http_log('Saved: ~w', [File]).
+
+%%
 %% run action
+%%
 :- http_handler('/run', run, [methods([post])]).
 
 run(Request) :-
@@ -102,52 +116,65 @@ run(Request) :-
     http_read_json_dict(Request, Dict, []),
     http_log('~p~n', [params(Dict)]),
 
-    ( is_dict(Dict),
-      _{activation_id: ActivationID,
-        action_name: ActionName,
-        deadline: Deadline,
-        api_key: API_KEY,
-        value: Value,
-        namespace: Namespace} :< Dict
+    ( check_run_param(Dict, ActivationID, ActionName, Value)
       -> split_string(ActionName, "/", "", ["", NS, Name]),
-         http_log('Namespace: ~p, Name: ~p, ~p~n',
-                  [NS, Name, params(ActivationID, ActionName, Deadline,
-                                    API_KEY, Value, Namespace)]),
-         cached_job(Name, Binary, Main, Code),
-         ( Binary = true
-           -> http_log('Binary: ~p~n', [job(Name, Binary, Main, Code)]),
-              atom_json_dict(Arg, Value, []),
-              format(string(Command), "cd /action; ./~w '~w'", [Main, Arg]),
-              format(user_output,
-                     '~nExecute Binary: ~w~nActivation ID: ~w~n',
-                     [Command, ActivationID]),
-              open(pipe(Command), read, S2),
-              call_cleanup(
-                      read_string(S2, _N, Json),
-                      close(S2)),
-              atom_json_dict(Json, Output, []),
-              format(user_output,
-                     '~nBinary Exection Result: ~p~nActivation ID: ~w~n',
-                     [Output, ActivationID]),
-              Status = 200
-           ;  http_log('Text  : ~p~n', [job(Name, Binary, Main, Code)]),
-              load_term(Name, File),
-              atom_string(Func, Main),
-              Q =.. [Func, Value, Output],
-              format(user_output,
-                     '~nExecute Text: ~w, Function: ~w~nActivation ID: ~w~n',
-                     [File, Q, ActivationID]),
-              Q,
-              format(user_output,
-                     '~nText Exection Result: ~p~nActivation ID: ~w~n',
-                     [Output, ActivationID]),
-              Status = 200
-         ),
-         retract(cached_job(Name, Binary, Main, Code))
+         http_log('Namespace: ~p, Name: ~p~n', [NS, Name]),
+         ( cached_job(Name, Binary, Main, Code)
+           -> format(user_output, 'cached_job OK: ~p~n',
+                     [(Name, Binary, Main, Code)]),
+              exec(Name, Binary, Main, Code, Value, ActivationID, Output, Status)
+           ;  format(user_output, 'cached_job NG: ~p~n',
+                     [(Name, Binary, Main, Code)]),
+              Output = _{error: 'internal state error'},
+              Status = 500
+         )
       ;  Output = _{error: 'illegal parameter'},
          Status = 404
     ),
     reply_json_dict(Output, [status(Status)]).
+
+%%
+check_run_param(Dict, ActivationID, ActionName, Value) :-
+    is_dict(Dict),
+    _{activation_id: ActivationID,
+      action_name: ActionName,
+      deadline: _Deadline,
+      api_key: _API_KEY,
+      value: Value,
+      namespace: _Namespace} :< Dict.
+
+%% Binary Execution
+exec(Name, true, Main, Code, Value, ActivationID, Output, Status) :-
+    http_log('Binary: ~p~n', [(Name, Main, Code)]),
+    atom_json_dict(Arg, Value, []),
+    format(string(Command), "cd /action; ./~w '~w'", [Main, Arg]),
+    format(user_output,
+           '~nExecute Binary: ~w~nActivation ID: ~w~n',
+           [Command, ActivationID]),
+    open(pipe(Command), read, S2),
+    call_cleanup(
+            read_string(S2, _N, Json),
+            close(S2)),
+    atom_json_dict(Json, Output, []),
+    format(user_output,
+           '~nBinary Exection Result: ~p~nActivation ID: ~w~n',
+           [Output, ActivationID]),
+    Status = 200.
+
+%% Text Execution
+exec(Name, false, Main, Code, Value, ActivationID, Output, Status) :-
+        http_log('Text  : ~p~n', [(Name, false, Main, Code)]),
+        load_term(Name, File),
+        atom_string(Func, Main),
+        Q =.. [Func, Value, Output],
+        format(user_output,
+               '~nExecute Text: ~w, Function: ~w~nActivation ID: ~w~n',
+               [File, Q, ActivationID]),
+        Q,
+        format(user_output,
+               '~nText Exection Result: ~p~nActivation ID: ~w~n',
+               [Output, ActivationID]),
+        Status = 200.
 
 %%
 term_json_dict(Term, Dict) :-
