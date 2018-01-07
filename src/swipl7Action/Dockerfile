@@ -14,7 +14,6 @@
 #
 
 FROM swipl:7.5.15
-#FROM swipl:7.6.3
 
 RUN apt-get update -y && \ 
     apt-get install -y zip unzip \
@@ -23,7 +22,7 @@ RUN apt-get update -y && \
 
 EXPOSE 8080
 
-RUN mkdir /prologAction
+RUN mkdir /prologAction /action /logs
 ADD swipl_runner.pl /prologAction/
 
 CMD ["/bin/bash", "-c", "cd prologAction && swipl -q -l swipl_runner.pl -g main -t halt"]

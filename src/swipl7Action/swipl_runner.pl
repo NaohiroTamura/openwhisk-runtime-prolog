@@ -71,11 +71,11 @@ init(Request) :-
       _{value: _{name: Name, binary: Binary, main: Main, code: Code}} :< Dict
       -> ( Binary = "true"
            -> base64(PlainCode, Code),
-              open('/action/exe.zip', write, S1, [type(binary)]),
+              open('/action/exec.zip', write, S1, [type(binary)]),
               call_cleanup(
                       write(S1, PlainCode),
                       close(S1)),
-              open(pipe('cd /action; unzip -o exe.zip'), read, S2),
+              open(pipe('cd /action; unzip -o exec.zip'), read, S2),
               call_cleanup(
                       read_string(S2, _N, Unzip),
                       close(S2)),
@@ -115,7 +115,7 @@ run(Request) :-
            (  Binary = "true"
               -> http_log('Binary: ~p~n', [job(Name, Binary, Main, Code)]),
                  atom_json_dict(Arg, Value, []),
-                 format(string(Command), "cd /action; ./exe '~w'", [Arg]),
+                 format(string(Command), "cd /action; ./exec '~w'", [Arg]),
                  format(user_output, 'Command: ~w~n', [Command]),
                  open(pipe(Command), read, S2),
                  call_cleanup(

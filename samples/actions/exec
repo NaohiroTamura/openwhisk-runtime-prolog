@@ -4,7 +4,7 @@
 
 :- use_module(library(http/json)).
 
-%% $ ./exe '{"name":"script"}'
+%% $ ./exec '{"name":"script"}'
 %% {"payload":"Hello, script!"}
 main([Json |_Argv]) :-
     open_string(Json, S),

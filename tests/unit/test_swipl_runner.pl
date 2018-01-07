@@ -70,7 +70,7 @@ test(secnarios) :-
     assertion((Dict2, StatusCode2) = (_{payload:"Hello, runner!"}, 200)),
 
     %% 2. init_zip
-    open(pipe('cd samples/actions; zip - exe'), read, S3, [type(binary)]),
+    open(pipe('cd samples/actions; zip - exec'), read, S3, [type(binary)]),
     read_string(S3, _N, Code3),
     base64(Code3, Base64),
     Params3 = _{value:

@@ -18,7 +18,7 @@ SHELL = /bin/bash
 docker_image_prefix =
 docker_image_tag = :latest
 
-unit_test_files := $(wildcard tests/swipl7Action/test_*.pl)
+unit_test_files := $(wildcard tests/unit/test_*.pl)
 
 all: unit_test
 
@@ -32,16 +32,21 @@ unit_test:
 	done
 	pkill -HUP swipl
 
-# make -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1 build
+# make build -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
 build:
 	@echo "create runtime image"
 	@pushd src/swipl7Action && \
 	docker build -t $(docker_image_prefix)swipl7action$(docker_image_tag) . &&\
 	popd
 
-# make -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1 run
+# make deploy -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
+push:
+	@echo "deploy to Docker Hub"
+	docker push  $(docker_image_prefix)swipl7action$(docker_image_tag)
+
+# make run -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
 run:
-	@echo "run prolog action runner in docker"
+	@echo "run prolog action runner in docker for debugging"
 	docker run -d \
 	           -p 8080:8080 -v /tmp:/logs -v /tmp:/action \
 	           $(docker_image_prefix)swipl7action$(docker_image_tag)
