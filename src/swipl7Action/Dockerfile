@@ -20,6 +20,8 @@ RUN apt-get update -y && \
                        procps curl iputils-ping iproute2 traceroute dnsutils \
                        less vim-tiny
 
+RUN curl -L https://github.com/apache/incubator-openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-amd64.tgz | tar zxvf - -C /usr/local/bin
+
 EXPOSE 8080
 
 RUN mkdir /prologAction /action /logs

@@ -19,6 +19,7 @@ docker_image_prefix =
 docker_image_tag = :latest
 
 unit_test_files := $(wildcard tests/unit/test_*.pl)
+functional_test_files := $(wildcard tests/functional/test_*.pl)
 
 all: unit_test
 
@@ -31,6 +32,13 @@ unit_test:
 		swipl -q -l $$case -g run_tests -t halt; \
 	done
 	pkill -HUP swipl
+
+functional_test:
+	@echo "functional  test"
+	for case in $(functional_test_files); do \
+		echo $$case; \
+		swipl -q -l $$case -g run_tests -t halt; \
+	done
 
 # make build -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
 build:
