@@ -15,11 +15,14 @@
 %% limitations under the License.
 %%
 
-%% $ wsk action create hello_prolog hello_world.pl \
+%% $ wsk action create hello_sub hello_world_sub.pl \
 %%   --docker $(docker_image_prefix)swipl7action -i
 %%
-%% $ wsk action invoke hello_prolog -p name Prolog -ir
+%% $ wsk action invoke hello_sub -p name SubPredicate -ir
 %%
-main(Arg, _{payload: Greetings}) :-
+main(Arg, Res) :-
     ( _{name: Name} :< Arg; Name = 'World' ),
-    atomics_to_string(['Hello, ', Name, '!'], Greetings).
+    atomics_to_string(['Hello, ', Name, '!'], Greetings),
+    sub(_{payload: Greetings}, Res).
+
+sub(A, A) :- writeln(user_output, 'sub predicate is called').

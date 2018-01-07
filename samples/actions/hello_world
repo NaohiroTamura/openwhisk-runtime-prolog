@@ -1,3 +1,4 @@
+#!/usr/bin/env swipl
 %% -*- mode: prolog; coding: utf-8; -*-
 %%
 %% Copyright 2017 FUJITSU LIMITED
@@ -15,11 +16,25 @@
 %% limitations under the License.
 %%
 
-%% $ wsk action create hello_prolog hello_world.pl \
+:- initialization(main, main).
+
+:- use_module(library(http/json)).
+
+%% $ zip hello_world.zip hello_world
+%%
+%% $ wsk action create hello_script hello_world.zip --main hello_world \
 %%   --docker $(docker_image_prefix)swipl7action -i
 %%
-%% $ wsk action invoke hello_prolog -p name Prolog -ir
+%% $ wsk action invoke hello_script -p name PrologScript -ir
+
+%% $ ./hello_world '{"name":"PrologScript"}'
+%% {"payload":"Hello, PrologScript!"}
 %%
-main(Arg, _{payload: Greetings}) :-
-    ( _{name: Name} :< Arg; Name = 'World' ),
-    atomics_to_string(['Hello, ', Name, '!'], Greetings).
+main([Json |_Argv]) :-
+    open_string(Json, S),
+    json_read_dict(S, Dict),
+    ( _{name: Name} :< Dict; Name = 'World' ),
+    atomics_to_string(['Hello, ', Name, '!'], Greetings),
+    json_write_dict(user_output, _{payload: Greetings}).
+
+

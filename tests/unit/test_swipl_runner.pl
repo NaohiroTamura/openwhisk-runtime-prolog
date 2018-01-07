@@ -40,11 +40,11 @@ read_code(File, Code, Options) :-
 %%
 :- begin_tests(hello_world).
 
-test(secnarios) :-
+test(scenario) :-
     %% 1. init_text
     read_code('samples/actions/hello_world.pl', Code1),
     Params1 = _{value:
-                _{name: "helloProlog",
+                _{name: "hello_prolog",
                   binary: "false",
                   main: "main",
                   code: Code1
@@ -58,25 +58,27 @@ test(secnarios) :-
 
     %% 2. run_text
     Params2 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
-                action_name: "/guest/helloProlog",
+                action_name: "/guest/hello_prolog",
                 deadline: "1515113315714",
                 api_key: "ID:PW",
-                value: _{name: "runner"},
+                value: _{name: "Prolog"},
                 namespace: "guest"},
     term_json_dict(Json2, Params2),
     http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
               [status_code(StatusCode2)]),
     term_json_dict(Data2, Dict2),
-    assertion((Dict2, StatusCode2) = (_{payload:"Hello, runner!"}, 200)),
+    assertion((Dict2, StatusCode2) = (_{payload:"Hello, Prolog!"}, 200)),
 
     %% 2. init_zip
-    open(pipe('cd samples/actions; zip - exec'), read, S3, [type(binary)]),
-    read_string(S3, _N, Code3),
+    open(pipe('cd samples/actions; zip - hello_world'), read, S3, [type(binary)]),
+    call_cleanup(
+            read_string(S3, _N, Code3),
+            close(S3)),
     base64(Code3, Base64),
     Params3 = _{value:
-                _{name: "prologScript",
+                _{name: "prolog_script",
                   binary: "true",
-                  main: "main",
+                  main: "hello_world",
                   code: Base64
                  }
                },
@@ -88,16 +90,16 @@ test(secnarios) :-
 
     %% 4. run_zip
     Params4 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
-                action_name: "/guest/prologScript",
+                action_name: "/guest/prolog_script",
                 deadline: "1515113315714",
                 api_key: "ID:PW",
-                value: _{name: "runner"},
+                value: _{name: "PrologScript"},
                 namespace: "guest"},
     term_json_dict(Json4, Params4),
     http_post("http://127.0.0.1:8080/run", json(Json4), Data4,
               [status_code(StatusCode4)]),
     term_json_dict(Data4, Dict4),
-    assertion((Dict4, StatusCode4) = (_{payload:"Hello, runner!"}, 200)).
+    assertion((Dict4, StatusCode4) = (_{payload:"Hello, PrologScript!"}, 200)).
 
 test(init_error, (Dict, StatusCode) = (_{error:"illegal parameter"}, 404)) :-
     Params = 1,

@@ -15,11 +15,11 @@
 %% limitations under the License.
 %%
 
-%% $ wsk action create hello_prolog hello_world.pl \
+%% $ wsk action create hello_start hello_world_start.pl --main start \
 %%   --docker $(docker_image_prefix)swipl7action -i
 %%
-%% $ wsk action invoke hello_prolog -p name Prolog -ir
+%% $ wsk action invoke hello_start -p name Entrypoint -ir
 %%
-main(Arg, _{payload: Greetings}) :-
+start(Arg, _{payload: Greetings}) :-
     ( _{name: Name} :< Arg; Name = 'World' ),
     atomics_to_string(['Hello, ', Name, '!'], Greetings).

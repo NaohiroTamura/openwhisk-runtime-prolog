@@ -36,7 +36,7 @@
 %%   $ swipl -q -l swipl_runner.pl -g main -t halt
 %%
 %% start:
-%%   ?- asl_svc:main.
+%%   ?- main.
 %% stop the server:
 %%   ?- http_stop_server(8080,[]).
 %%
@@ -44,8 +44,9 @@ main :-
     set_setting(http:logfile,'/logs/httpd.log'), % docker volume /tmp
     getenv('SVC_PORT', Port) -> server(Port); server(8080).
 
+%% The number of workers has to be one so that /run cannot overtake /init.
 server(Port) :-
-    http_server(http_dispatch, [port(Port)]),
+    http_server(http_dispatch, [port(Port), workers(1)]),
     thread_get_message(stop).
 
 %% signal handler
@@ -69,7 +70,7 @@ init(Request) :-
 
     ( is_dict(Dict),
       _{value: _{name: Name, binary: Binary, main: Main, code: Code}} :< Dict
-      -> ( Binary = "true"
+      -> ( ( Binary = "true"; Binary = true)
            -> base64(PlainCode, Code),
               open('/action/exec.zip', write, S1, [type(binary)]),
               call_cleanup(
@@ -79,12 +80,13 @@ init(Request) :-
               call_cleanup(
                       read_string(S2, _N, Unzip),
                       close(S2)),
-              format(user_output, 'Unzip: ~w', [Unzip])
+              http_log('Unzip: ~w', [Unzip])
            ;  term_string(_Term, Code), %% make sure Code has no syntax error
               save_term(Name, Code, File),
-              format(user_output, 'Saved: ~w', [File])
+              http_log('Saved: ~w', [File])
          ),
-         assertz(cached_job(Name, Binary, Main, Code)),
+         atom_string(BinaryAtom, Binary),
+         assertz(cached_job(Name, BinaryAtom, Main, Code)),
          Output = "OK",
          Status = 200
       ;  Output = _{error: 'illegal parameter'},
@@ -107,33 +109,41 @@ run(Request) :-
         api_key: API_KEY,
         value: Value,
         namespace: Namespace} :< Dict
-      -> ( split_string(ActionName, "/", "", ["", NS, Name]),
-           format(user_output, 'Namespace: ~p, Name: ~p, ~p~n',
+      -> split_string(ActionName, "/", "", ["", NS, Name]),
+         http_log('Namespace: ~p, Name: ~p, ~p~n',
                   [NS, Name, params(ActivationID, ActionName, Deadline,
                                     API_KEY, Value, Namespace)]),
-           cached_job(Name, Binary, Main, Code),
-           (  Binary = "true"
-              -> http_log('Binary: ~p~n', [job(Name, Binary, Main, Code)]),
-                 atom_json_dict(Arg, Value, []),
-                 format(string(Command), "cd /action; ./exec '~w'", [Arg]),
-                 format(user_output, 'Command: ~w~n', [Command]),
-                 open(pipe(Command), read, S2),
-                 call_cleanup(
-                         read_string(S2, _N, Json),
-                         close(S2)),
-                 atom_json_dict(Json, Output, []),
-                 format(user_output, 'Result: ~p, ~p~n', [Json, Output]),
-                 Status = 200
-              ;  http_log('Text  : ~p~n', [job(Name, Binary, Main, Code)]),
-                 load_term(Name, File),
-                 atom_string(Func, Main),
-                 Q =.. [Func, Value, Output],
-                 format(user_output, 'File: ~w, Function: ~w~n', [File, Q]),
-                 Q,
-                 Status = 200
-           ),
-           retract(cached_job(Name, Binary, Main, Code))
-         )
+         cached_job(Name, Binary, Main, Code),
+         ( Binary = true
+           -> http_log('Binary: ~p~n', [job(Name, Binary, Main, Code)]),
+              atom_json_dict(Arg, Value, []),
+              format(string(Command), "cd /action; ./~w '~w'", [Main, Arg]),
+              format(user_output,
+                     '~nExecute Binary: ~w~nActivation ID: ~w~n',
+                     [Command, ActivationID]),
+              open(pipe(Command), read, S2),
+              call_cleanup(
+                      read_string(S2, _N, Json),
+                      close(S2)),
+              atom_json_dict(Json, Output, []),
+              format(user_output,
+                     '~nBinary Exection Result: ~p~nActivation ID: ~w~n',
+                     [Output, ActivationID]),
+              Status = 200
+           ;  http_log('Text  : ~p~n', [job(Name, Binary, Main, Code)]),
+              load_term(Name, File),
+              atom_string(Func, Main),
+              Q =.. [Func, Value, Output],
+              format(user_output,
+                     '~nExecute Text: ~w, Function: ~w~nActivation ID: ~w~n',
+                     [File, Q, ActivationID]),
+              Q,
+              format(user_output,
+                     '~nText Exection Result: ~p~nActivation ID: ~w~n',
+                     [Output, ActivationID]),
+              Status = 200
+         ),
+         retract(cached_job(Name, Binary, Main, Code))
       ;  Output = _{error: 'illegal parameter'},
          Status = 404
     ),

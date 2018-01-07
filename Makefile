@@ -39,9 +39,9 @@ build:
 	docker build -t $(docker_image_prefix)swipl7action$(docker_image_tag) . &&\
 	popd
 
-# make deploy -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
+# make push -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
 push:
-	@echo "deploy to Docker Hub"
+	@echo "push to Docker Hub"
 	docker push  $(docker_image_prefix)swipl7action$(docker_image_tag)
 
 # make run -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
