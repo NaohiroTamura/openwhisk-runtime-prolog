@@ -16,7 +16,7 @@
 %%
 
 %% $ wsk action create hello_sub hello_world_sub.pl \
-%%   --docker $(docker_image_prefix)swipl7action -i
+%%   --docker ${docker_image_prefix}swipl7action -i
 %%
 %% $ wsk action invoke hello_sub -p name SubPredicate -ir
 %%

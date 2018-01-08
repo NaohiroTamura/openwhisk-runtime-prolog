@@ -16,7 +16,7 @@
 %%
 
 %% $ wsk action create hello_start hello_world_start.pl --main start \
-%%   --docker $(docker_image_prefix)swipl7action -i
+%%   --docker ${docker_image_prefix}swipl7action -i
 %%
 %% $ wsk action invoke hello_start -p name Entrypoint -ir
 %%

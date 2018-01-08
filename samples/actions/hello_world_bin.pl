@@ -15,11 +15,27 @@
 %% limitations under the License.
 %%
 
-%% $ wsk action create hello_prolog hello_world.pl \
+:- use_module(library(http/json)).
+
+%% $ swipl -O --goal=go --stand_alone=true -o myexec -c hello_world_bin.pl
+%%
+%% $ zip myexec.zip myexec
+%%
+%% $ wsk action create hello_binary myexec.zip --main myexec \
 %%   --docker ${docker_image_prefix}swipl7action -i
 %%
-%% $ wsk action invoke hello_prolog -p name Prolog -ir
+%% $ wsk action invoke hello_binary -p name PrologBinary -ir
+
+%% $ ./myexec '{"name":"PrologBinary"}'
+%% {"payload":"Hello, PrologBinary!"}
 %%
-main(Arg, _{payload: Greetings}) :-
-    ( _{name: Name} :< Arg; Name = 'World' ),
-    atomics_to_string(['Hello, ', Name, '!'], Greetings).
+go :-
+    current_prolog_flag(argv, [_Command, Json |_]),
+    open_string(Json, S),
+    json_read_dict(S, Dict),
+    ( _{name: Name} :< Dict; Name = 'World' ),
+    atomics_to_string(['Hello, ', Name, '!'], Greetings),
+    json_write_dict(user_output, _{payload: Greetings}),
+    halt(0).
+
+

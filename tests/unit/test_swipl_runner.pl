@@ -116,3 +116,37 @@ test(run_error, (Dict, StatusCode) = (_{error:"illegal parameter"}, 404)) :-
     term_json_dict(Data, Dict).
 
 :- end_tests(hello_world).
+
+%%
+:- begin_tests(hello_start).
+
+test(hello_start) :-
+    %% 1. init_text
+    read_code('samples/actions/hello_world_start.pl', Code1),
+    Params1 = _{value:
+                _{name: "hello_start",
+                  binary: "false",
+                  main: "start",
+                  code: Code1
+                 }
+               },
+    term_json_dict(Json1, Params1),
+    http_post("http://127.0.0.1:8080/init", json(Json1), Data1,
+              [status_code(StatusCode1)]),
+    term_json_dict(Data1, Dict1),
+    assertion((Dict1, StatusCode1) = ("OK", 200)),
+
+    %% 2. run_text
+    Params2 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
+                action_name: "/guest/hello_start",
+                deadline: "1515113315714",
+                api_key: "ID:PW",
+                value: _{name: "Entrypoint"},
+                namespace: "guest"},
+    term_json_dict(Json2, Params2),
+    http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
+              [status_code(StatusCode2)]),
+    term_json_dict(Data2, Dict2),
+    assertion((Dict2, StatusCode2) = (_{payload:"Hello, Entrypoint!"}, 200)).
+
+:- end_tests(hello_start).
