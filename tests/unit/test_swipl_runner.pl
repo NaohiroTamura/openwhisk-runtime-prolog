@@ -36,7 +36,7 @@ read_code(File, Code, Options) :-
             close(S)).
 
 %%
-%% 
+%% Unit Test
 %%
 :- begin_tests(hello_world).
 
@@ -150,3 +150,37 @@ test(hello_start) :-
     assertion((Dict2, StatusCode2) = (_{payload:"Hello, Entrypoint!"}, 200)).
 
 :- end_tests(hello_start).
+
+%%
+:- begin_tests(hello_scala).
+
+test(hello_scala) :-
+    %% 1. init_text
+    read_code('samples/actions/hello_world_scala.pl', Code1),
+    Params1 = _{value:
+                _{name: "hello_scala",
+                  binary: "false",
+                  main: "main",
+                  code: Code1
+                 }
+               },
+    term_json_dict(Json1, Params1),
+    http_post("http://127.0.0.1:8080/init", json(Json1), Data1,
+              [status_code(StatusCode1)]),
+    term_json_dict(Data1, Dict1),
+    assertion((Dict1, StatusCode1) = ("OK", 200)),
+
+    %% 2. run_text
+    Params2 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
+                action_name: "/guest/hello_scala",
+                deadline: "1515113315714",
+                api_key: "ID:PW",
+                value: "Scala",
+                namespace: "guest"},
+    term_json_dict(Json2, Params2),
+    http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
+              [status_code(StatusCode2)]),
+    atomic(Data2),
+    assertion((Data2, StatusCode2) = ('Hello, Scala!', 200)).
+
+:- end_tests(hello_scala).

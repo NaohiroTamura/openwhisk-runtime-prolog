@@ -16,7 +16,7 @@
 %%
 
 %%
-%%  
+%%  OpenWhisk runtimes for prolog
 %%
 
 :- module(swlpl_runner, [main/0]).
@@ -131,7 +131,10 @@ run(Request) :-
       ;  Output = _{error: 'illegal parameter'},
          Status = 404
     ),
-    reply_json_dict(Output, [status(Status)]).
+    ( atomic(Output)
+      -> reply_json(Output, [status(Status)])
+      ;  reply_json_dict(Output, [status(Status)])
+    ).
 
 %%
 check_run_param(Dict, ActivationID, ActionName, Value) :-
