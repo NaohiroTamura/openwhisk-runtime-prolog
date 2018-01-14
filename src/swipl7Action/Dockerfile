@@ -16,7 +16,7 @@
 FROM swipl:7.5.15
 
 RUN apt-get update -y && \ 
-    apt-get install -y zip unzip \
+    apt-get install -y zip unzip ca-certificates \
                        procps curl iputils-ping iproute2 traceroute dnsutils \
                        less vim-tiny
 
