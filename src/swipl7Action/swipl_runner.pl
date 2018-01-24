@@ -113,6 +113,16 @@ save_action(Name, false, _Main, Code) :-
 
 run(Request) :-
     http_log('~p~n', [request(Request)]),
+    catch( run1(Request),
+           Error,
+           ( Error =.. [ErrorType, Message, Code |_],
+             http_log('~w~n', [catch((ErrorType, Message, Code))]),
+             reply_json_dict(_{errorMessage: Message,
+                               errorType: ErrorType}, [status(Code)])
+           )
+         ).
+
+run1(Request) :-
     http_read_json_dict(Request, Dict, []),
     http_log('~p~n', [params(Dict)]),
 
