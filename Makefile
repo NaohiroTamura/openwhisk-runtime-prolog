@@ -15,8 +15,7 @@
 
 SHELL = /bin/bash
 
-docker_image_prefix =
-docker_image_tag = :latest
+docker_image_tag ?= latest
 
 unit_test_files := $(wildcard tests/unit/test_*.pl)
 functional_test_files := $(wildcard tests/functional/test_*.pl)
@@ -40,24 +39,24 @@ functional_test:
 		swipl -q -l $$case -g run_tests -t halt; \
 	done
 
-# make build -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
+# make build -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 build:
 	@echo "create runtime image"
 	@pushd src/swipl7Action && \
-	docker build -t $(docker_image_prefix)swipl7action$(docker_image_tag) . &&\
+	docker build -t $(docker_image_prefix)/swipl7action:$(docker_image_tag) . &&\
 	popd
 
-# make push -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
+# make push -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 push:
 	@echo "push to Docker Hub"
-	docker push  $(docker_image_prefix)swipl7action$(docker_image_tag)
+	docker push  $(docker_image_prefix)/swipl7action:$(docker_image_tag)
 
-# make run -e docker_image_prefix=myprefix/ -e docker_image_tag=:0.1
+# make run -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 run:
 	@echo "run prolog action runner in docker for debugging"
 	docker run -d \
 	           -p 8080:8080 -v /tmp:/logs -v /tmp:/action \
-	           $(docker_image_prefix)swipl7action$(docker_image_tag)
+	           $(docker_image_prefix)/swipl7action:$(docker_image_tag)
 
 debug:
 	@echo "run prolog action runner in local for debugging"

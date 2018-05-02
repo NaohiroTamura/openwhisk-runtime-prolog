@@ -5,9 +5,9 @@ This OpenWhisk runtimes provide SWI Prolog 7.5 environment for Prolog predicate,
 ## Build
 
 ```sh
-ubuntu@trusty:~/openwhisk-runtime-prolog[master]$ make build -e docker_image_prefix=myprefix/
+ubuntu@trusty:~/openwhisk-runtime-prolog[master]$ make build -e docker_image_prefix=myprefix
 
-ubuntu@trusty:~/openwhisk-runtime-prolog[master]$ make push -e docker_image_prefix=myprefix/
+ubuntu@trusty:~/openwhisk-runtime-prolog[master]$ make push -e docker_image_prefix=myprefix
 
 ```
 
@@ -18,7 +18,7 @@ ubuntu@trusty:~/openwhisk-runtime-prolog[master]$ make push -e docker_image_pref
 * execute "main" predicate of hello_world.pl
 
 ```sh
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_prolog hello_world.pl --docker ${docker_image_prefix}swipl7action -i
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_prolog hello_world.pl --docker ${docker_image_prefix}/swipl7action -i
 ok: created action hello_prolog
 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action invoke hello_prolog -p name Prolog -ir
@@ -30,7 +30,7 @@ ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action inv
 * execute "start" predicate of hello_world_start.pl
 
 ```sh
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_start hello_world_start.pl --main start --docker ${docker_image_prefix}swipl7action -i
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_start hello_world_start.pl --main start --docker ${docker_image_prefix}/swipl7action -i
 ok: created action hello_start
 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action invoke hello_start -p name Entrypoint -ir
@@ -50,7 +50,7 @@ ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ ./hello_world 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ zip hello_world.zip hello_world
   adding: hello_world (deflated 43%)
 
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_script hello_world.zip --main hello_world --docker ${docker_image_prefix}swipl7action -i
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_script hello_world.zip --main hello_world --docker ${docker_image_prefix}/swipl7action -i
 ok: created action hello_script
 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action invoke hello_script -p name PrologScript -ir
@@ -85,7 +85,7 @@ ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ ./myexec '{"na
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ zip myexec.zip myexec
   adding: myexec (deflated 63%)
 
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_binary myexec.zip --main myexec --docker ${docker_image_prefix}swipl7action -i
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_binary myexec.zip --main myexec --docker ${docker_image_prefix}/swipl7action -i
 ok: created action hello_binary
 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ $ wsk action invoke hello_binary -p name PrologBinary -ir

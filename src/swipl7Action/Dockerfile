@@ -17,9 +17,13 @@ FROM swipl:7.5.15
 
 RUN apt-get update -y && \ 
     apt-get install -y zip unzip ca-certificates \
-                       procps curl iputils-ping iproute2 traceroute dnsutils \
-                       less vim-tiny
+                       procps curl iputils-ping iproute2 traceroute dnsutils less \
+                       vim-tiny tcpdump kafkacat socat net-tools gettext-base expect
 
+RUN curl -L https://download.docker.com/linux/static/stable/x86_64/docker-17.12.1-ce.tgz | tar zxvf - --strip 1 -C /usr/local/bin docker/docker
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod 0755 kubectl && mv kubectl /usr/local/bin
+RUN curl -L https://mirror.openshift.com/pub/openshift-v3/clients/3.9.14/linux/oc.tar.gz | tar zxvf - -C /usr/local/bin
+RUN curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.9a/source-to-image-v1.1.9a-40ad911d-linux-amd64.tar.gz | tar zxvf - -C /usr/local/bin ./s2i
 RUN curl -L https://github.com/apache/incubator-openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-amd64.tgz | tar zxvf - -C /usr/local/bin
 
 EXPOSE 8080
