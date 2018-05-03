@@ -23,7 +23,7 @@
 %% $ zip hello_world.zip hello_world
 %%
 %% $ wsk action create hello_script hello_world.zip --main hello_world \
-%%   --docker ${docker_image_prefix}swipl7action -i
+%%   --docker ${docker_image_prefix}/swipl7action -i
 %%
 %% $ wsk action invoke hello_script -p name PrologScript -ir
 
@@ -36,5 +36,3 @@ main([Json |_Argv]) :-
     ( _{name: Name} :< Dict; Name = 'World' ),
     atomics_to_string(['Hello, ', Name, '!'], Greetings),
     json_write_dict(user_output, _{payload: Greetings}).
-
-

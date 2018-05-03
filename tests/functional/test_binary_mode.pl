@@ -25,15 +25,16 @@ test(scenario) :-
     %% 0. settings
     getenv(docker_image_prefix, DOCKER_IMAGE_PREFIX),
     getenv(docker_image_tag, DOCKER_IMAGE_TAG),
-    format(string(DOCKER_IMAGE), '~wswipl7action~w',
+    format(string(DOCKER_IMAGE), '~w/swipl7action:~w',
            [DOCKER_IMAGE_PREFIX, DOCKER_IMAGE_TAG]),
 
     %% 1. wsk action create
-    shell("cd samples/actions; zip /tmp/hello_world.zip hello_world", Status0),
+    shell("cd samples/actions; zip /tmp/hello_world_script.zip hello_world_script",
+          Status0),
     assertion(Status0 = 0),
 
-    atomics_to_string(['wsk action create hello_binary /tmp/hello_world.zip',
-                       ' --main hello_world --docker ', DOCKER_IMAGE, ' -i'],
+    atomics_to_string(['wsk action create hello_binary /tmp/hello_world_script.zip',
+                       ' --main hello_world_script --docker ', DOCKER_IMAGE, ' -i'],
                       CreateCmd),
     shell(CreateCmd, Status1),
     assertion(Status1 = 0),

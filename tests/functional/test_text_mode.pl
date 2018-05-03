@@ -25,7 +25,7 @@ test(scenario) :-
     %% 0. settings
     getenv(docker_image_prefix, DOCKER_IMAGE_PREFIX),
     getenv(docker_image_tag, DOCKER_IMAGE_TAG),
-    format(string(DOCKER_IMAGE), '~wswipl7action~w',
+    format(string(DOCKER_IMAGE), '~w/swipl7action:~w',
            [DOCKER_IMAGE_PREFIX, DOCKER_IMAGE_TAG]),
 
     %% 1. wsk action create

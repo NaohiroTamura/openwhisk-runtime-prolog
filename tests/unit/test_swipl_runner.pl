@@ -69,8 +69,9 @@ test(scenario) :-
     term_json_dict(Data2, Dict2),
     assertion((Dict2, StatusCode2) = (_{payload:"Hello, Prolog!"}, 200)),
 
-    %% 2. init_zip
-    open(pipe('cd samples/actions; zip - hello_world'), read, S3, [type(binary)]),
+    %% 3. init_zip
+    open(pipe('cd samples/actions; zip - hello_world_script'), read, S3,
+         [type(binary)]),
     call_cleanup(
             read_string(S3, _N, Code3),
             close(S3)),
@@ -78,7 +79,7 @@ test(scenario) :-
     Params3 = _{value:
                 _{name: "prolog_script",
                   binary: "true",
-                  main: "hello_world",
+                  main: "hello_world_script",
                   code: Base64
                  }
                },
@@ -220,3 +221,41 @@ test(hello_exception) :-
                         errorType: "CustomError"}).
 
 :- end_tests(hello_exception).
+
+:- begin_tests(shell_script).
+
+test(shell_script) :-
+    %% 1. init_zip
+    open(pipe('cd samples/actions; zip - shell_script'), read, S1,
+         [type(binary)]),
+    call_cleanup(
+            read_string(S1, _N, Code1),
+            close(S1)),
+    base64(Code1, Base64),
+    Params1 = _{value:
+                _{name: "shell_script",
+                  binary: "true",
+                  main: "shell_script",
+                  code: Base64
+                 }
+               },
+    term_json_dict(Json1, Params1),
+    http_post("http://127.0.0.1:8080/init", json(Json1), Data1,
+              [status_code(StatusCode1)]),
+    term_json_dict(Data1, Dict1),
+    assertion((Dict1, StatusCode1) = ("OK", 200)),
+
+    %% 2. run_zip
+    Params2 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
+                action_name: "/guest/shell_script",
+                deadline: "1515113315714",
+                api_key: "ID:PW",
+                value: _{name: "ShellScript"},
+                namespace: "guest"},
+    term_json_dict(Json2, Params2),
+    http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
+              [status_code(StatusCode2)]),
+    term_json_dict(Data2, Dict2),
+    assertion((Dict2, StatusCode2) = (_{result: "ok"}, 200)).
+
+:- end_tests(shell_script).
