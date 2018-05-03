@@ -16,7 +16,7 @@
 FROM swipl:7.5.15
 
 RUN apt-get update -y && \ 
-    apt-get install -y zip unzip ca-certificates \
+    apt-get install -y zip unzip ca-certificates git make \
                        procps curl iputils-ping iproute2 traceroute dnsutils less \
                        vim-tiny tcpdump kafkacat socat net-tools gettext-base expect
 
