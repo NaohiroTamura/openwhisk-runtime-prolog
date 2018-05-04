@@ -44,13 +44,13 @@ ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action inv
 * execute Prolog script, hello_script, which file name can be specified as '--main' parameter.
 
 ```sh
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ ./hello_world '{"name":"Script"}'
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ ./hello_world_script '{"name":"Script"}'
 {"payload":"Hello, Script!"}
 
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ zip hello_world.zip hello_world
-  adding: hello_world (deflated 43%)
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ zip hello_world_script.zip hello_world_script
+  adding: hello_world_script (deflated 43%)
 
-ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_script hello_world.zip --main hello_world --docker ${docker_image_prefix}/swipl7action -i
+ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action create hello_script hello_world_script.zip --main hello_world_script --docker ${docker_image_prefix}/swipl7action -i
 ok: created action hello_script
 
 ubuntu@trusty:~/openwhisk-runtime-prolog/samples/actions[master]$ wsk action invoke hello_script -p name PrologScript -ir
