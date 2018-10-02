@@ -259,3 +259,45 @@ test(shell_script) :-
     assertion((Dict2, StatusCode2) = (_{result: "ok"}, 200)).
 
 :- end_tests(shell_script).
+
+
+:- begin_tests(graphql).
+
+test(github) :-
+    getenv('GITHUB_TOKEN', GITHUB_TOKEN),
+
+    %% 1. init_text
+    read_code('samples/actions/graphql.pl', Code1),
+    Params1 = _{value:
+                _{name: "graphql",
+                  binary: "false",
+                  main: "main",
+                  code: Code1
+                 }
+               },
+    term_json_dict(Json1, Params1),
+    http_post("http://127.0.0.1:8080/init", json(Json1), Data1,
+              [status_code(StatusCode1)]),
+    term_json_dict(Data1, Dict1),
+    assertion((Dict1, StatusCode1) = ("OK", 200)),
+
+    %% 2. run_text
+    Params2 = _{activation_id: "307bd9e1b82b4b62bbd9e1b82b1b62b0",
+                action_name: "/guest/graphql",
+                deadline: "1515113315714",
+                api_key: "ID:PW",
+                value: _{ target: "fujitsu.com",
+                          github_token: GITHUB_TOKEN,
+                          owner: '"naohirotamura"',
+                          name: '"faasshell"',
+                          since: '"2018-06-21T00:00:00+00:00"',
+                          until: '"2018-07-20T00:00:00+00:00"'
+                        },
+                namespace: "guest"},
+    term_json_dict(Json2, Params2),
+    http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
+              [status_code(StatusCode2)]),
+    term_json_dict(Data2, Dict2),
+    assertion((Dict2, StatusCode2) = (_{payload: _}, 200)).
+
+:- end_tests(graphql).
