@@ -243,8 +243,8 @@ main(In, _{ payload: Out }) :-
      -p github_token $GITHUB_TOKEN \
      -p owner '"naohirotamura"' \
      -p name '"faasshell"' \
-     -p since '"2018-06-21T00:00:00+00:00"' \
-     -p until '"2018-07-20T00:00:00+00:00"'
+     -p since '\"2018-06-21T00:00:00+00:00\"' \
+     -p until '\"2018-07-20T00:00:00+00:00\"'
 */
 
 test1(Out) :-
