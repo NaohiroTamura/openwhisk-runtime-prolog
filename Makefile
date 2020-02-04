@@ -1,4 +1,4 @@
-# Copyright 2017 FUJITSU LIMITED
+# Copyright 2017-2020 FUJITSU LIMITED
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -24,7 +24,7 @@ all: unit_test
 
 unit_test:
 	@echo "unit  test"
-	swipl -q -l src/swipl7Action/swipl_runner.pl -g main -t halt &
+	swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt &
 	sleep 3
 	for case in $(unit_test_files); do \
 		echo $$case; \
@@ -42,22 +42,22 @@ functional_test:
 # make build -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 build:
 	@echo "create runtime image"
-	@pushd src/swipl7Action && \
-	docker build -t $(docker_image_prefix)/swipl7action:$(docker_image_tag) . &&\
+	@pushd src/swipl8Action && \
+	docker build -t $(docker_image_prefix)/swipl8action:$(docker_image_tag) . &&\
 	popd
 
 # make push -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 push:
 	@echo "push to Docker Hub"
-	docker push  $(docker_image_prefix)/swipl7action:$(docker_image_tag)
+	docker push  $(docker_image_prefix)/swipl8action:$(docker_image_tag)
 
 # make run -e docker_image_prefix=myprefix -e docker_image_tag=0.1
 run:
 	@echo "run prolog action runner in docker for debugging"
 	docker run -d \
 	           -p 8080:8080 -v /tmp:/logs -v /tmp:/action \
-	           $(docker_image_prefix)/swipl7action:$(docker_image_tag)
+	           $(docker_image_prefix)/swipl8action:$(docker_image_tag)
 
 debug:
 	@echo "run prolog action runner in local for debugging"
-	swipl -q -l src/swipl7Action/swipl_runner.pl -g main -t halt
+	swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt

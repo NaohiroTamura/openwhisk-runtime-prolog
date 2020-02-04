@@ -15,7 +15,7 @@
 %% limitations under the License.
 %%
 
-:- include('src/swipl7Action/swipl_runner.pl').
+:- include('src/swipl8Action/swipl_runner.pl').
 
 %%
 :- use_module(library(plunit)).
