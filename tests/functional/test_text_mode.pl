@@ -1,3 +1,4 @@
+
 %% -*- mode: prolog; coding: utf-8; -*-
 %%
 %% Copyright 2017 FUJITSU LIMITED
@@ -25,11 +26,11 @@ test(scenario) :-
     %% 0. settings
     getenv(docker_image_prefix, DOCKER_IMAGE_PREFIX),
     getenv(docker_image_tag, DOCKER_IMAGE_TAG),
-    format(string(DOCKER_IMAGE), '~w/swipl7action:~w',
+    format(string(DOCKER_IMAGE), '~w/swipl8action:~w',
            [DOCKER_IMAGE_PREFIX, DOCKER_IMAGE_TAG]),
 
     %% 1. wsk action create
-    atomics_to_string(['wsk action create hello_world',
+    atomics_to_string(['ibmcloud wsk action create hello_world',
                        ' samples/actions/hello_world.pl',
                        ' --main main --docker ', DOCKER_IMAGE, ' -i'],
                       CreateCmd),
@@ -37,7 +38,7 @@ test(scenario) :-
     assertion(Status2 = 0),
 
     %% 2. wsk action invoke
-    open(pipe("wsk action invoke hello_world -p name Prolog -ir"), read, S2),
+    open(pipe("ibmcloud wsk action invoke hello_world -p name Prolog -ir"), read, S2),
     call_cleanup(
             read_string(S2, _, Result2),
             close(S2)),
@@ -45,7 +46,7 @@ test(scenario) :-
     assertion(_{payload: "Hello, Prolog!"} :< Dict2),
 
     %% 3. wsk action delete
-    shell("wsk action delete hello_world -i", Status4),
+    shell("ibmcloud wsk action delete hello_world -i", Status4),
     assertion(Status4 = 0).
 
 :- end_tests(text).
@@ -56,15 +57,15 @@ test(scenario) :-
     %% 0. settings
     getenv(docker_image_prefix, DOCKER_IMAGE_PREFIX),
     getenv(docker_image_tag, DOCKER_IMAGE_TAG),
-    format(string(DOCKER_IMAGE), '~w/swipl7action:~w',
+    format(string(DOCKER_IMAGE), '~w/swipl8action:~w',
            [DOCKER_IMAGE_PREFIX, DOCKER_IMAGE_TAG]),
 
     %% 1. wsk action create
     /*
-    $ wsk action create graphql samples/actions/graphql.pl \
+    $ wsk action create graphql_test samples/actions/graphql.pl \
       --main main --docker nao16t/swipl7action:latest -i
     */
-    atomics_to_string(['wsk action create graphql_test',
+    atomics_to_string(['ibmcloud wsk action create graphql_test',
                        ' samples/actions/graphql.pl',
                        ' --main main --docker ', DOCKER_IMAGE, ' -i'],
                       CreateCmd),
@@ -82,11 +83,11 @@ test(scenario) :-
     getenv('GITHUB_TOKEN', GITHUB_TOKEN),
     format(string(PIPE_CMD),
            %% \c is continuous line
-           "wsk action invoke graphql_test -ir \c
+           "ibmcloud wsk action invoke graphql_test -ir \c
             -p target fujitsu.com -p github_token ~w \c
-            -p owner '\"naohirotamura\"' -p name '\"faasshell\"' \c
-            -p since '\\\"2018-06-21T00:00:00+00:00\\\"' \c
-            -p until '\\\"2018-07-20T00:00:00+00:00\\\"'",
+            -p owner \"naohirotamura\" -p name \"faasshell\" \c
+            -p since \"2018-06-21T00:00:00+00:00\" \c
+            -p until \"2018-07-20T00:00:00+00:00\"",
            [GITHUB_TOKEN]),
 
     open(pipe(PIPE_CMD), read, S2),
@@ -94,11 +95,11 @@ test(scenario) :-
             read_string(S2, _, Result2),
             close(S2)),
     atom_json_dict(Result2, Dict2, []),
-    _{payload: History} :< Dict2,
-    assertion(length(History,2)),
+    _{values: [History]} :< Dict2,
+    assertion(length(History, 6)),
 
     %% 3. wsk action delete
-    shell("wsk action delete graphql_test -i", Status4),
+    shell("ibmcloud wsk action delete graphql_test -i", Status4),
     assertion(Status4 = 0).
 
 :- end_tests(graphql).

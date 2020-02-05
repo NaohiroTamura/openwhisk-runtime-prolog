@@ -24,11 +24,11 @@ all: unit_test
 
 unit_test:
 	@echo "unit  test"
-	swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt &
+	bin/swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt &
 	sleep 3
 	for case in $(unit_test_files); do \
 		echo $$case; \
-		swipl -q -l $$case -g run_tests -t halt; \
+		bin/swipl -q -l $$case -g run_tests -t halt; \
 	done
 	pkill -HUP swipl
 
@@ -36,7 +36,7 @@ functional_test:
 	@echo "functional  test"
 	for case in $(functional_test_files); do \
 		echo $$case; \
-		swipl -q -l $$case -g run_tests -t halt; \
+		bin/swipl -q -l $$case -g run_tests -t halt; \
 	done
 
 # make build -e docker_image_prefix=myprefix -e docker_image_tag=0.1
@@ -60,4 +60,4 @@ run:
 
 debug:
 	@echo "run prolog action runner in local for debugging"
-	swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt
+	bin/swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt

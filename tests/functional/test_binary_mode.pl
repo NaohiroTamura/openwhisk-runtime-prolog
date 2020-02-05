@@ -25,7 +25,7 @@ test(scenario) :-
     %% 0. settings
     getenv(docker_image_prefix, DOCKER_IMAGE_PREFIX),
     getenv(docker_image_tag, DOCKER_IMAGE_TAG),
-    format(string(DOCKER_IMAGE), '~w/swipl7action:~w',
+    format(string(DOCKER_IMAGE), '~w/swipl8action:~w',
            [DOCKER_IMAGE_PREFIX, DOCKER_IMAGE_TAG]),
 
     %% 1. wsk action create
@@ -33,14 +33,14 @@ test(scenario) :-
           Status0),
     assertion(Status0 = 0),
 
-    atomics_to_string(['wsk action create hello_binary /tmp/hello_world_script.zip',
+    atomics_to_string(['ibmcloud wsk action create hello_binary /tmp/hello_world_script.zip',
                        ' --main hello_world_script --docker ', DOCKER_IMAGE, ' -i'],
                       CreateCmd),
     shell(CreateCmd, Status1),
     assertion(Status1 = 0),
 
     %% 2. wsk action invoke
-    open(pipe("wsk action invoke hello_binary -p name Binary -ir"), read, S2),
+    open(pipe("ibmcloud wsk action invoke hello_binary -p name Binary -ir"), read, S2),
     call_cleanup(
             read_string(S2, _, Result2),
             close(S2)),
@@ -48,7 +48,7 @@ test(scenario) :-
     assertion(_{payload: "Hello, Binary!"} :< Dict2),
 
     %% 3. wsk action delete
-    shell("wsk action delete hello_binary -i", Status3),
+    shell("ibmcloud wsk action delete hello_binary -i", Status3),
     assertion(Status3 = 0).
 
 :- end_tests(binary).
