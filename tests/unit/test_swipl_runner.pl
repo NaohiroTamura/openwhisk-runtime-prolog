@@ -47,7 +47,8 @@ test(scenario) :-
                 _{name: "hello_prolog",
                   binary: "false",
                   main: "main",
-                  code: Code1
+                  code: Code1,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -80,7 +81,8 @@ test(scenario) :-
                 _{name: "prolog_script",
                   binary: "true",
                   main: "hello_world_script",
-                  code: Base64
+                  code: Base64,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json3, Params3),
@@ -128,7 +130,8 @@ test(hello_start) :-
                 _{name: "hello_start",
                   binary: "false",
                   main: "start",
-                  code: Code1
+                  code: Code1,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -162,7 +165,8 @@ test(hello_scala) :-
                 _{name: "hello_scala",
                   binary: "false",
                   main: "main",
-                  code: Code1
+                  code: Code1,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -196,7 +200,8 @@ test(hello_exception) :-
                 _{name: "hello_exception",
                   binary: "false",
                   main: "main",
-                  code: Code1
+                  code: Code1,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -236,7 +241,8 @@ test(shell_script) :-
                 _{name: "shell_script",
                   binary: "true",
                   main: "shell_script",
-                  code: Base64
+                  code: Base64,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -272,7 +278,8 @@ test(github) :-
                 _{name: "graphql",
                   binary: "false",
                   main: "main",
-                  code: Code1
+                  code: Code1,
+                  env: openwhisk_env
                  }
                },
     term_json_dict(Json1, Params1),
@@ -298,6 +305,6 @@ test(github) :-
     http_post("http://127.0.0.1:8080/run", json(Json2), Data2,
               [status_code(StatusCode2)]),
     term_json_dict(Data2, Dict2),
-    assertion((Dict2, StatusCode2) = (_{payload: _}, 200)).
+    assertion((Dict2, StatusCode2) = (_{values: _}, 200)).
 
 :- end_tests(graphql).
