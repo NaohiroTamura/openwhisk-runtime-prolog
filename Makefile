@@ -24,13 +24,16 @@ all: unit_test
 
 unit_test:
 	@echo "unit  test"
-	bin/swipl -q -l src/swipl8Action/swipl_runner.pl -g main -t halt &
+	docker run -d --name ow_swipl_container_unit_test \
+	           -p 8080:8080 -v /tmp:/logs -v /tmp:/action \
+	           $(docker_image_prefix)/swipl8action:$(docker_image_tag)
 	sleep 3
 	for case in $(unit_test_files); do \
 		echo $$case; \
 		bin/swipl -q -l $$case -g run_tests -t halt; \
 	done
-	pkill -HUP swipl
+	docker stop ow_swipl_container_unit_test
+	docker rm ow_swipl_container_unit_test
 
 functional_test:
 	@echo "functional  test"
