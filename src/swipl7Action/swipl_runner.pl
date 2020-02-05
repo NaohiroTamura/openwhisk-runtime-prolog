@@ -1,6 +1,6 @@
 %% -*- mode: prolog; coding: utf-8; -*-
 %%
-%% Copyright 2017 FUJITSU LIMITED
+%% Copyright 2017-2020 FUJITSU LIMITED
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -84,7 +84,8 @@ init(Request) :-
 %%
 check_init_param(Dict, Name, Binary, Main, Code) :-
     is_dict(Dict),
-    _{value: _{name: Name, binary: BinaryStr, main: Main, code: Code}} :< Dict,
+    _{value: _{name: Name, binary: BinaryStr, main: Main, code: Code,
+               env: _Env}} :< Dict,
     atom_string(Binary, BinaryStr).
 
 %% Binary Mode

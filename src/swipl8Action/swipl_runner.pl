@@ -1,6 +1,6 @@
 %% -*- mode: prolog; coding: utf-8; -*-
 %%
-%% Copyright 2017 FUJITSU LIMITED
+%% Copyright 2017-2020 FUJITSU LIMITED
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ init(Request) :-
     http_log('~p~n', [request(Request)]),
     http_read_json_dict(Request, Dict, []),
     http_log('~p~n', [params(Dict)]),
+    % format(user_output, '~p~n', [params(Dict)]),
 
     ( check_init_param(Dict, Name, Binary, Main, Code)
       -> save_action(Name, Binary, Main, Code),
@@ -84,7 +85,8 @@ init(Request) :-
 %%
 check_init_param(Dict, Name, Binary, Main, Code) :-
     is_dict(Dict),
-    _{value: _{name: Name, binary: BinaryStr, main: Main, code: Code}} :< Dict,
+    _{value: _{name: Name, binary: BinaryStr, main: Main, code: Code,
+               env: _Env}} :< Dict,
     atom_string(Binary, BinaryStr).
 
 %% Binary Mode
@@ -125,6 +127,7 @@ run(Request) :-
 run1(Request) :-
     http_read_json_dict(Request, Dict, []),
     http_log('~p~n', [params(Dict)]),
+    % format(user_output, '~p~n', [params(Dict)]),
 
     ( check_run_param(Dict, ActivationID, ActionName, Value)
       -> split_string(ActionName, "/", "", ["", NS, Name]),
